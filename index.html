@@ -1,15 +1,29 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>График приёма таблеток</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        h2 { margin-top: 30px; }
+        body { font-family: sans-serif; background: #f2f2f2; padding: 20px; }
+        h1 { text-align: center; }
         .day { margin-bottom: 20px; }
-        .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-        .pill { padding: 10px; background: #fff; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; }
-        .pill.taken { background-color: #b2f2bb; }
+        .day-title { font-weight: bold; margin-bottom: 10px; }
+        .pills { display: flex; flex-wrap: wrap; gap: 10px; }
+        .pill {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: white;
+            padding: 8px;
+            min-width: 80px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .pill.taken { background-color: #c8e6c9; border-color: #388e3c; }
+        .pill .label { font-weight: bold; display: block; }
+        .pill .time { font-size: 0.9em; margin-top: 2px; color: #555; }
     </style>
 </head>
 <body>
@@ -17,56 +31,55 @@
     <div id="schedule"></div>
 
     <script>
-        const plan = [
-            { days: [1,2,3], every: 2, times: 6 },
-            { days: [4,5,6,7,8,9,10,11], every: 2.5, times: 5 },
-            { days: [12,13,14,15,16], every: 3, times: 4 },
-            { days: [17,18,19,20], every: 5, times: 3 },
-            { days: [21,22,23,24,25], every: 0, times: 1, as_needed: true }
+        const SCHEDULE = [
+            { days: [1, 2, 3], interval: 2, count: 6 },
+            { days: [4,5,6,7,8,9,10,11,12], interval: 2.5, count: 5 },
+            { days: [13,14,15,16], interval: 3, count: 4 },
+            { days: [17,18,19,20], interval: 5, count: 3 },
+            { days: [21,22,23,24,25], interval: 0, count: 1 }
         ];
 
-        const startTime = 8;
+        const startHour = 8;
+        const scheduleDiv = document.getElementById('schedule');
+        const state = JSON.parse(localStorage.getItem('pill_state') || '{}');
 
-        const container = document.getElementById('schedule');
-        const state = JSON.parse(localStorage.getItem('pill-tracker') || '{}');
+        function formatTime(hour) {
+            return hour.toString().padStart(2, '0') + ":00";
+        }
 
         function createPill(day, index, time) {
-            const key = `d${day}-p${index}`;
-            const btn = document.createElement('div');
-            btn.className = 'pill' + (state[key] ? ' taken' : '');
-            btn.textContent = `Таблетка ${index + 1}
-${time}:00`;
-            btn.onclick = () => {
+            const key = `${day}_${index}`;
+            const div = document.createElement('div');
+            div.className = 'pill' + (state[key] ? ' taken' : '');
+            div.onclick = () => {
                 state[key] = !state[key];
-                localStorage.setItem('pill-tracker', JSON.stringify(state));
-                btn.classList.toggle('taken');
+                localStorage.setItem('pill_state', JSON.stringify(state));
+                div.classList.toggle('taken');
             };
-            return btn;
+            div.innerHTML = `<span class="label">Таблетка ${index+1}</span><span class="time">${formatTime(time)}</span>`;
+            return div;
         }
 
-        function renderSchedule() {
-            plan.forEach(({ days, every, times, as_needed }) => {
-                days.forEach(day => {
-                    const dayBlock = document.createElement('div');
-                    dayBlock.className = 'day';
-                    const title = document.createElement('h2');
-                    title.textContent = `День ${day} — ${as_needed ? 'по самочувствию' : `каждые ${every} ч`}`;
-                    const row = document.createElement('div');
-                    row.className = 'pill-row';
+        SCHEDULE.forEach(({ days, interval, count }) => {
+            days.forEach(day => {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day';
+                const title = document.createElement('div');
+                title.className = 'day-title';
+                title.textContent = `День ${day}` + (interval ? ` — каждые ${interval} ч` : ' — по самочувствию');
+                dayDiv.appendChild(title);
 
-                    for (let i = 0; i < times; i++) {
-                        const hour = startTime + (as_needed ? 0 : Math.floor(i * every));
-                        row.appendChild(createPill(day, i, hour));
-                    }
+                const pillsDiv = document.createElement('div');
+                pillsDiv.className = 'pills';
+                for (let i = 0; i < count; i++) {
+                    const time = interval ? startHour + i * interval : startHour;
+                    pillsDiv.appendChild(createPill(day, i, time));
+                }
 
-                    dayBlock.appendChild(title);
-                    dayBlock.appendChild(row);
-                    container.appendChild(dayBlock);
-                });
+                dayDiv.appendChild(pillsDiv);
+                scheduleDiv.appendChild(dayDiv);
             });
-        }
-
-        renderSchedule();
+        });
     </script>
 </body>
 </html>
