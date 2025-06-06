@@ -1,0 +1,10 @@
+
+{
+  "name": "Tablet Tracker",
+  "short_name": "Tracker",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "Track your tablets daily",
+  "icons": []
+}
