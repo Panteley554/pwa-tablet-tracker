@@ -1,14 +1,109 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="manifest" href="manifest.json" />
-  <title>PWA Tablet Tracker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Таблетки</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h2 {
+      text-align: center;
+    }
+    .day {
+      margin: 20px 0;
+    }
+    .day-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .pill {
+      background: white;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+      min-width: 100px;
+      cursor: pointer;
+    }
+    .pill.taken {
+      background-color: #a5d6a7;
+      border-color: #388e3c;
+      color: #1b5e20;
+    }
+  </style>
 </head>
 <body>
-  <h1>Hello, this is your PWA!</h1>
-  <script src="app.js"></script>
+  <h2>График приёма таблеток</h2>
+  <div id="schedule"></div>
+
+  <script>
+    const schedule = document.getElementById('schedule');
+
+    const plan = [
+      { days: 3, interval: 2 },
+      { days: 8, interval: 2.5 },
+      { days: 3, interval: 3 },
+      { days: 4, interval: 4 },
+      { days: 2, interval: 5 },
+      { days: 5, interval: 0 },
+    ];
+
+    let dayCounter = 1;
+
+    plan.forEach(({ days, interval }) => {
+      for (let d = 0; d < days; d++) {
+        const day = document.createElement('div');
+        day.className = 'day';
+        const title = document.createElement('div');
+        title.className = 'day-title';
+        title.textContent = `${dayCounter} день` + (interval ? ` — каждые ${interval} ч` : ` — по самочувствию`);
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+
+        const times = [];
+        if (interval) {
+          let time = 8 * 60;
+          while (time < 24 * 60) {
+            const hours = Math.floor(time / 60).toString().padStart(2, '0');
+            const minutes = (time % 60).toString().padStart(2, '0');
+            times.push(`${hours}:${minutes}`);
+            time += interval * 60;
+          }
+        } else {
+          times.push('по самочувствию');
+        }
+
+        times.forEach((t, i) => {
+          const id = `d${dayCounter}t${i}`;
+          const pill = document.createElement('div');
+          pill.className = 'pill';
+          pill.innerHTML = `<div>Таблетка ${i + 1}</div><small>${t}</small>`;
+          if (localStorage.getItem(id) === '1') pill.classList.add('taken');
+
+          pill.addEventListener('click', () => {
+            const isTaken = pill.classList.toggle('taken');
+            localStorage.setItem(id, isTaken ? '1' : '0');
+          });
+
+          grid.appendChild(pill);
+        });
+
+        day.appendChild(title);
+        day.appendChild(grid);
+        schedule.appendChild(day);
+        dayCounter++;
+      }
+    });
+  </script>
 </body>
 </html>
